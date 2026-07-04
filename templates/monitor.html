@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Monitor — BOBOK</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+</head>
+<body class="hud-body">
+
+  <!-- HEADER -->
+  <header class="hud-header">
+    <div class="logo-block">
+      <div class="logo-icon-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <ellipse cx="12" cy="12" rx="10" ry="6"/>
+          <circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/>
+          <circle cx="12" cy="12" r="5" stroke-dasharray="3 2"/>
+        </svg>
+      </div>
+      <div>
+        <div class="logo-title">BOBOK</div>
+        <div class="logo-sub">Sistem Deteksi Kantuk v2.0</div>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <span class="user-tag">{{ user.nama }}</span>
+      <div class="nav-links">
+        <a href="{{ url_for('analytics') }}" class="nav-btn">Laporan</a>
+        <a href="{{ url_for('logout') }}" class="nav-btn">Keluar</a>
+      </div>
+      <div class="sys-clock" id="sysClock">--:--:--</div>
+      <div class="conn-indicator" id="connIndicator">
+        <span class="conn-dot" id="connDot"></span>
+        <span id="connLabel">Offline</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN GRID -->
+  <main class="main-grid">
+
+    <!-- LEFT: Camera -->
+    <section class="panel cam-panel">
+      <div class="panel-label">
+        <span class="panel-label-dot"></span>
+        Kamera — Live Feed
+      </div>
+      <div class="cam-wrapper">
+        <div class="cam-corner tl"></div>
+        <div class="cam-corner tr"></div>
+        <div class="cam-corner bl"></div>
+        <div class="cam-corner br"></div>
+        <div class="cam-scan-line" id="camScanLine"></div>
+
+        <img id="videoFeed" src="" alt="Video Feed"/>
+
+        <div class="cam-offline" id="camOffline">
+          <div class="cam-offline-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="1.5">
+              <path d="M15 10l4.553-2.069A1 1 0 0 1 21 8.87v6.26a1 1 0 0 1-1.447.894L15 14M5 8h8a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2z"/>
+              <line x1="2" y1="2" x2="22" y2="22" stroke="#C0392B" stroke-width="1.5"/>
+            </svg>
+          </div>
+          <span>Kamera tidak aktif</span>
+        </div>
+
+        <div class="cam-overlay">
+          <div class="face-box" id="faceBox"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CENTER: Status -->
+    <section class="panel center-panel">
+      <div class="panel-label">
+        <span class="panel-label-dot"></span>
+        Status Kewaspadaan
+      </div>
+
+      <div class="status-ring-wrapper">
+        <div class="status-ring" id="statusRing">
+          <svg class="ring-svg" viewBox="0 0 180 180">
+            <circle class="ring-track" cx="90" cy="90" r="75"/>
+            <circle class="ring-progress" id="ringProgress" cx="90" cy="90" r="75"
+              stroke-dasharray="471" stroke-dashoffset="471"/>
+          </svg>
+          <div class="ring-inner">
+            <div class="ring-icon" id="ringIcon">
+              <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" width="40" height="40">
+                <ellipse cx="20" cy="20" rx="16" ry="10"/>
+                <circle cx="20" cy="20" r="4" fill="currentColor" stroke="none"/>
+                <circle cx="20" cy="20" r="7" stroke-dasharray="2.5 2"/>
+              </svg>
+            </div>
+            <div class="ring-label" id="ringLabel">Standby</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="status-alert-box" id="statusAlertBox">
+        <div class="alert-code" id="alertCode">SYS.INIT</div>
+        <div class="alert-msg" id="alertMsg">Menunggu koneksi backend...</div>
+      </div>
+
+      <div class="panel-label" style="margin-top: 4px;">
+        <span class="panel-label-dot"></span>
+        Log Peringatan
+      </div>
+      <div class="alert-log" id="alertLog">
+        <span class="log-entry log-sys">[SISTEM] Aplikasi dimuat. Menunggu koneksi.</span>
+      </div>
+    </section>
+
+    <!-- RIGHT: Metrics -->
+    <section class="panel metrics-panel">
+      <div class="panel-label">
+        <span class="panel-label-dot"></span>
+        Metrik Biosinyal
+      </div>
+
+      <!-- EAR -->
+      <div class="metric-card" id="earCard">
+        <div class="metric-header">
+          <span class="metric-name">EAR</span>
+          <span class="metric-fullname">Eye Aspect Ratio</span>
+        </div>
+        <div class="gauge-bar-wrap">
+          <div class="gauge-bar">
+            <div class="gauge-fill" id="earFill" style="width:0%"></div>
+            <div class="gauge-zones">
+              <div class="zone zone-danger" style="width:22%"></div>
+              <div class="zone zone-warn"   style="width:8%"></div>
+              <div class="zone zone-safe"   style="width:70%"></div>
+            </div>
+          </div>
+          <div class="gauge-markers">
+            <span>0.0</span><span>0.22</span><span>0.26</span><span>0.5</span>
+          </div>
+        </div>
+        <div class="metric-value-row">
+          <span class="metric-val" id="earVal">—</span>
+          <span class="metric-status" id="earStatus">—</span>
+        </div>
+      </div>
+
+      <!-- MAR -->
+      <div class="metric-card" id="marCard">
+        <div class="metric-header">
+          <span class="metric-name">MAR</span>
+          <span class="metric-fullname">Mouth Aspect Ratio</span>
+        </div>
+        <div class="gauge-bar-wrap">
+          <div class="gauge-bar">
+            <div class="gauge-fill" id="marFill" style="width:0%"></div>
+            <div class="gauge-zones">
+              <div class="zone zone-safe"   style="width:50%"></div>
+              <div class="zone zone-warn"   style="width:15%"></div>
+              <div class="zone zone-danger" style="width:35%"></div>
+            </div>
+          </div>
+          <div class="gauge-markers">
+            <span>0.0</span><span>0.25</span><span>0.4</span><span>0.7</span>
+          </div>
+        </div>
+        <div class="metric-value-row">
+          <span class="metric-val" id="marVal">—</span>
+          <span class="metric-status" id="marStatus">—</span>
+        </div>
+      </div>
+
+      <!-- Microsleep -->
+      <div class="metric-card" id="microCard">
+        <div class="metric-header">
+          <span class="metric-name">Microsleep</span>
+          <span class="metric-fullname">Frame Counter</span>
+        </div>
+        <div class="micro-bar-wrap">
+          <div class="micro-frames" id="microFrames"></div>
+          <div class="micro-threshold-label">Ambang: 10 frame</div>
+        </div>
+        <div class="metric-value-row">
+          <span class="metric-val" id="microVal">0</span>
+          <span class="metric-status" id="microStatus">Normal</span>
+        </div>
+      </div>
+
+      <!-- Buffer -->
+      <div class="metric-card">
+        <div class="metric-header">
+          <span class="metric-name">Buffer</span>
+          <span class="metric-fullname">Sliding Window (30fr)</span>
+        </div>
+        <div class="buffer-bar">
+          <div class="buffer-fill" id="bufferFill" style="width:0%"></div>
+        </div>
+        <div class="metric-value-row" style="margin-top:8px">
+          <span class="metric-val"><span id="bufferVal">0</span>/30</span>
+          <span class="metric-status" id="bufferStatus">Mengisi</span>
+        </div>
+      </div>
+
+      <!-- Session stats -->
+      <div class="stats-grid">
+        <div class="stat-cell">
+          <div class="stat-val" id="statSesi">00:00</div>
+          <div class="stat-label">Durasi Sesi</div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-val danger-text" id="statBahaya">0</div>
+          <div class="stat-label">Bahaya</div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-val warn-text" id="statPeringatan">0</div>
+          <div class="stat-label">Peringatan</div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-val safe-text" id="statSadar">0</div>
+          <div class="stat-label">Fokus</div>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="hud-footer">
+    <div class="footer-item">
+      <span class="footer-label">Model</span>
+      <span class="footer-val">CatBoost Classifier</span>
+    </div>
+    <div class="footer-divider"></div>
+    <div class="footer-item">
+      <span class="footer-label">Backend</span>
+      <span class="footer-val">127.0.0.1:5050</span>
+    </div>
+    <div class="footer-divider"></div>
+    <div class="footer-item">
+      <span class="footer-label">Window</span>
+      <span class="footer-val">30 Frame</span>
+    </div>
+    <div class="footer-divider"></div>
+    <div class="footer-item">
+      <span class="footer-label">Microsleep</span>
+      <span class="footer-val">≥ 10 Frame</span>
+    </div>
+    <div class="footer-btn-group">
+      <button class="hud-btn btn-reset" onclick="resetStats()">Reset</button>
+      <button class="hud-btn btn-connect" id="btnConnect" onclick="toggleConnect()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        <span>Mulai</span>
+      </button>
+    </div>
+  </footer>
+
+  <div class="danger-flash" id="dangerFlash"></div>
+
+  <audio id="alertAudio" preload="auto">
+    <source src="{{ url_for('static', filename='alert.mp3') }}" type="audio/mpeg"/>
+  </audio>
+
+  <script src="{{ url_for('static', filename='js/monitor.js') }}"></script>
+</body>
+</html>

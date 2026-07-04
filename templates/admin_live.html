@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Live Monitor — Admin BOBOK</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    body { overflow-y: auto; padding-top: var(--header-h); }
+
+    .live-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 12px;
+    }
+
+    .worker-card {
+      background: var(--bg-surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+      transition: border-color 0.3s, box-shadow 0.3s;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .worker-card.status-danger {
+      border-color: var(--danger-border);
+      background: var(--danger-bg);
+      box-shadow: 0 0 0 3px rgba(192,57,43,0.08);
+    }
+    .worker-card.status-warn {
+      border-color: var(--warn-border);
+      background: var(--warn-bg);
+    }
+    .worker-card.status-safe {
+      border-color: var(--safe-border);
+    }
+    .worker-card.status-offline {
+      opacity: 0.65;
+    }
+
+    .worker-avatar {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: var(--brand-dim);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--brand);
+      flex-shrink: 0;
+    }
+
+    .worker-head {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .worker-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+
+    .worker-status-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 10px;
+      border-radius: 100px;
+    }
+
+    .status-danger .worker-status-badge { background: var(--danger-bg); color: var(--danger); border: 1px solid var(--danger-border); }
+    .status-warn   .worker-status-badge { background: var(--warn-bg);   color: var(--warn);   border: 1px solid var(--warn-border); }
+    .status-safe   .worker-status-badge { background: var(--safe-bg);   color: var(--safe);   border: 1px solid var(--safe-border); }
+    .status-offline .worker-status-badge { background: var(--neutral-bg); color: var(--text-tertiary); border: 1px solid var(--neutral-border); }
+
+    .worker-metrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    .w-metric-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+    }
+
+    .w-metric-val {
+      font-family: var(--font-mono);
+      font-size: 18px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-top: 2px;
+    }
+
+    .worker-footer {
+      margin-top: 12px;
+      font-size: 11px;
+      color: var(--text-tertiary);
+      display: flex; align-items: center; gap: 6px;
+    }
+
+    .worker-footer-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--text-tertiary);
+    }
+
+    .status-safe .worker-footer-dot { background: var(--safe); }
+    .status-danger .worker-footer-dot { background: var(--danger); }
+    .status-warn .worker-footer-dot { background: var(--warn); }
+
+    .empty-state {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-tertiary);
+      font-size: 14px;
+    }
+
+    .pulse-ring {
+      animation: pulseCard 2s ease-in-out infinite;
+    }
+    @keyframes pulseCard {
+      0%, 100% { box-shadow: 0 0 0 3px rgba(192,57,43,0.08); }
+      50% { box-shadow: 0 0 0 6px rgba(192,57,43,0.03); }
+    }
+  </style>
+</head>
+<body class="hud-body">
+
+  <header class="hud-header">
+    <div class="logo-block">
+      <div class="logo-icon-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <ellipse cx="12" cy="12" rx="10" ry="6"/>
+          <circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/>
+          <circle cx="12" cy="12" r="5" stroke-dasharray="3 2"/>
+        </svg>
+      </div>
+      <div>
+        <div class="logo-title">BOBOK</div>
+        <div class="logo-sub">Admin — {{ user.nama }}</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="sys-clock" id="sysClock">--:--:--</div>
+      <div class="nav-links">
+        <a href="{{ url_for('admin_live') }}" class="nav-btn" style="color:#fff;background:rgba(255,255,255,0.12);border-color:rgba(255,255,255,0.25)">Live</a>
+        <a href="{{ url_for('admin_analytics') }}" class="nav-btn">Analytics</a>
+        <a href="{{ url_for('logout') }}" class="nav-btn">Keluar</a>
+      </div>
+    </div>
+  </header>
+
+  <div class="page-wrapper">
+
+    <div class="page-header">
+      <div>
+        <div class="page-title">Live Monitor</div>
+        <div class="page-sub">Status real-time semua pekerja aktif — diperbarui setiap 2 detik</div>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span class="conn-dot active"></span>
+        <span style="font-size:12px; color:var(--text-secondary);">Live</span>
+      </div>
+    </div>
+
+    <div class="live-grid" id="liveGrid">
+      <div class="empty-state">Memuat data pekerja...</div>
+    </div>
+
+  </div>
+
+  <script>
+    function initials(name) {
+      return name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+    }
+
+    function getStatusClass(status) {
+      if (!status || status === 'OFFLINE') return 'status-offline';
+      if (status.includes('BAHAYA'))     return 'status-danger';
+      if (status.includes('PERINGATAN')) return 'status-warn';
+      if (status.includes('FOKUS') || status.includes('SADAR')) return 'status-safe';
+      return 'status-offline';
+    }
+
+    function statusLabel(status) {
+      if (!status || status === 'OFFLINE') return 'Offline';
+      if (status.includes('BAHAYA'))     return 'Bahaya';
+      if (status.includes('PERINGATAN')) return 'Peringatan';
+      if (status.includes('FOKUS') || status.includes('SADAR')) return 'Fokus';
+      return 'Offline';
+    }
+
+    async function loadLive() {
+      try {
+        const res  = await fetch('/admin/live_data');
+        const data = await res.json();
+        const grid = document.getElementById('liveGrid');
+
+        if (data.length === 0) {
+          grid.innerHTML = '<div class="empty-state">Belum ada pekerja terdaftar.</div>';
+          return;
+        }
+
+        grid.innerHTML = '';
+        data.forEach(w => {
+          const cls = getStatusClass(w.status);
+          const isDanger = cls === 'status-danger';
+          const lastUp = w.last_update
+            ? new Date(w.last_update).toLocaleTimeString('id-ID', { hour12: false })
+            : '—';
+
+          const card = document.createElement('div');
+          card.className = `worker-card ${cls}${isDanger ? ' pulse-ring' : ''}`;
+          card.innerHTML = `
+            <div class="worker-head">
+              <div class="worker-avatar">${initials(w.nama)}</div>
+              <div>
+                <div class="worker-name">${w.nama}</div>
+                <span class="worker-status-badge">${statusLabel(w.status)}</span>
+              </div>
+            </div>
+            <div class="worker-metrics">
+              <div>
+                <div class="w-metric-label">EAR</div>
+                <div class="w-metric-val">${w.ear != null ? w.ear.toFixed(3) : '—'}</div>
+              </div>
+              <div>
+                <div class="w-metric-label">MAR</div>
+                <div class="w-metric-val">${w.mar != null ? w.mar.toFixed(3) : '—'}</div>
+              </div>
+            </div>
+            <div class="worker-footer">
+              <span class="worker-footer-dot"></span>
+              Diperbarui ${lastUp}
+            </div>
+          `;
+          grid.appendChild(card);
+        });
+      } catch(e) {
+        console.error('Live data error:', e);
+      }
+    }
+
+    function updateClock() {
+      document.getElementById('sysClock').textContent =
+        new Date().toLocaleTimeString('id-ID', { hour12: false });
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    loadLive();
+    setInterval(loadLive, 2000);
+  </script>
+</body>
+</html>

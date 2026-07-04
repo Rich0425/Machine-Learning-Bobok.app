@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Daftar — BOBOK</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+  <style>
+    body { overflow-x: hidden; }
+    .auth-shell {
+      display: grid;
+      grid-template-columns: 60% 40%;
+      min-height: 100vh;
+      width: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      margin: 0;
+      z-index: 2;
+    }
+
+    /* ── VISUAL PANEL (60%) ─────────────────────────────────── */
+    .auth-visual {
+      position: relative; overflow: hidden; min-width: 0;
+      padding: 52px 56px; display: flex; flex-direction: column; justify-content: center;
+      background:
+        radial-gradient(ellipse 90% 70% at 20% 50%, rgba(91,157,255,0.07), transparent 55%),
+        radial-gradient(ellipse 60% 50% at 85% 80%, rgba(139,123,247,0.06), transparent 50%),
+        linear-gradient(160deg, #0d1322 0%, #090c14 55%, #0a0f1d 100%);
+      border-right: none;
+    }
+    .auth-visual::after {
+      content: '';
+      position: absolute; top: 0; right: 0; bottom: 0; width: 1px; z-index: 3;
+      background: linear-gradient(180deg, transparent 5%, rgba(91,157,255,0.45) 35%, rgba(192,132,252,0.35) 65%, transparent 95%);
+      box-shadow: 0 0 24px rgba(91,157,255,0.25);
+    }
+    .auth-visual::before {
+      content: '';
+      position: absolute; inset: 0; pointer-events: none; z-index: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.022) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.022) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: radial-gradient(ellipse 80% 80% at 40% 50%, black 20%, transparent 75%);
+    }
+    .visual-blob { position: absolute; border-radius: 50%; filter: blur(110px); opacity: 0.42; }
+    .blob-1 { width: 480px; height: 480px; top: -160px; right: -100px; background: radial-gradient(circle, var(--accent-2), transparent 70%); animation: driftA 30s ease-in-out infinite; }
+    .blob-2 { width: 400px; height: 400px; bottom: -140px; left: -80px; background: radial-gradient(circle, var(--accent-3), transparent 70%); animation: driftB 34s ease-in-out infinite; }
+
+    .brand-mark {
+      display: flex; align-items: center; gap: 14px; margin-bottom: 56px;
+      position: relative; z-index: 2;
+      animation: fadeIn 0.55s var(--ease) both;
+    }
+    .brand-icon-lg {
+      width: 44px; height: 44px; border-radius: 13px;
+      background: var(--grad-brand-soft); border: 1px solid var(--border-strong);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 28px rgba(91,157,255,0.18);
+      position: relative; overflow: hidden;
+    }
+    .brand-icon-lg::after {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent 50%);
+    }
+    .brand-icon-lg svg { width: 22px; height: 22px; color: var(--accent); position: relative; z-index: 1; }
+    .brand-mark span { font-family: var(--font-display); font-weight: 700; font-size: 20px; letter-spacing: 2.5px; }
+
+    .visual-center { position: relative; z-index: 2; max-width: 640px; width: 100%; }
+    .visual-center .eyebrow {
+      font-family: var(--font-mono); font-size: 11px; letter-spacing: 3px;
+      color: var(--accent); text-transform: uppercase; margin-bottom: 18px;
+      display: flex; align-items: center; gap: 10px;
+      animation: fadeSlideUp 0.7s var(--ease) 0.12s both;
+    }
+    .visual-center .eyebrow::before { content:''; width: 28px; height: 1px; background: linear-gradient(90deg, var(--accent), transparent); }
+    .visual-center h1 {
+      font-family: var(--font-display); font-size: clamp(34px, 3.2vw, 46px); font-weight: 700;
+      line-height: 1.12; letter-spacing: -0.6px; margin-bottom: 20px;
+      animation: fadeSlideUp 0.75s var(--ease) 0.22s both;
+    }
+    .grad-text { background: var(--grad-brand); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .visual-center > p {
+      color: var(--text-secondary); font-size: 15.5px; line-height: 1.78; margin-bottom: 36px; max-width: 480px;
+      animation: fadeSlideUp 0.75s var(--ease) 0.32s both;
+    }
+
+    /* Scan emblem */
+    .scan-emblem {
+      position: relative; width: 120px; height: 120px; margin-bottom: 32px;
+      display: flex; align-items: center; justify-content: center;
+      animation: fadeSlideUp 0.8s var(--ease) 0.42s both;
+    }
+    .scan-ring { position: absolute; inset: 0; border-radius: 50%; border: 1.5px dashed rgba(91,157,255,0.35); animation: spin 20s linear infinite; }
+    .scan-ring.ring2 { inset: 14px; border-color: rgba(192,132,252,0.3); animation: spin 26s linear infinite reverse; }
+    .scan-core {
+      width: 68px; height: 68px; border-radius: 50%;
+      background: var(--grad-brand-soft); border: 1px solid var(--border-strong);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 60px rgba(91,157,255,0.28), inset 0 1px 0 rgba(255,255,255,0.08);
+    }
+    .scan-core svg { width: 30px; height: 30px; color: var(--accent); animation: pulseGlow 3s ease-in-out infinite; }
+
+    /* Wave monitor */
+    .wave-monitor {
+      width: 100%; max-width: 480px; height: 80px; overflow: hidden;
+      border-radius: var(--radius-sm); border: 1px solid var(--border-strong);
+      background: rgba(255,255,255,0.03); position: relative;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 8px 32px rgba(0,0,0,0.25);
+      animation: fadeSlideUp 0.8s var(--ease) 0.52s both;
+    }
+    .wave-monitor::after {
+      content: ''; position: absolute; inset: 0; pointer-events: none;
+      background: linear-gradient(90deg, var(--bg-soft) 0%, transparent 14%, transparent 86%, var(--bg-soft) 100%);
+    }
+    .wave-monitor .wave-label {
+      position: absolute; top: 9px; left: 14px; z-index: 2;
+      font-family: var(--font-mono); font-size: 9px; letter-spacing: 2px;
+      color: var(--text-tertiary); text-transform: uppercase;
+    }
+    .wave-monitor .wave-status {
+      position: absolute; top: 9px; right: 14px; z-index: 2;
+      display: flex; align-items: center; gap: 6px;
+      font-family: var(--font-mono); font-size: 9px; letter-spacing: 1px; color: var(--safe);
+    }
+    .wave-monitor .wave-status::before {
+      content: ''; width: 6px; height: 6px; border-radius: 50%;
+      background: var(--safe); box-shadow: 0 0 8px var(--safe);
+      animation: pulseGlow 2s ease-in-out infinite;
+    }
+    .wave-track-wrap { display: flex; width: 200%; height: 100%; animation: scrollWave 8s linear infinite; }
+    .wave-track-wrap svg { width: 50%; height: 100%; flex-shrink: 0; display: block; }
+    @keyframes scrollWave { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+    /* Metric chips */
+    .metric-chips {
+      display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px;
+      animation: fadeSlideUp 0.8s var(--ease) 0.62s both;
+    }
+    .metric-chip {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 14px; border-radius: 100px;
+      background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.5px; color: var(--text-secondary);
+    }
+    .metric-chip strong { color: var(--accent); font-weight: 600; }
+
+    /* Floating feature cards */
+    .floating-cards { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+    .float-card {
+      position: absolute; display: flex; align-items: center; gap: 10px;
+      background: rgba(14,18,30,0.75); border: 1px solid var(--border-strong);
+      border-radius: var(--radius); padding: 12px 16px;
+      font-size: 12.5px; font-weight: 600; color: var(--text-primary);
+      backdrop-filter: blur(16px); box-shadow: 0 12px 40px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06);
+      animation: fadeIn 0.65s var(--ease) both, floatY 6s ease-in-out infinite;
+    }
+    .float-card .fc-icon {
+      width: 30px; height: 30px; border-radius: 9px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--accent-soft); color: var(--accent);
+    }
+    .float-card .fc-icon svg { width: 14px; height: 14px; }
+    .float-card .fc-sub { display: block; font-size: 10.5px; font-weight: 400; color: var(--text-tertiary); margin-top: 1px; }
+    .fc1 { top: 9%; right: 6%; animation-delay: 0.4s, 0s; }
+    .fc2 { bottom: 24%; right: 10%; animation-delay: 0.58s, 1.4s; }
+    .fc3 { top: 52%; left: 3%; animation-delay: 0.76s, 2.8s; }
+    @media (max-width: 1180px) { .floating-cards { display: none; } }
+
+    /* ── FORM PANEL (40%) ───────────────────────────────────── */
+    .auth-form-side {
+      min-width: 0; display: flex; align-items: center; justify-content: flex-start;
+      padding: 48px 36px 48px 52px; position: relative; z-index: 2;
+      background:
+        radial-gradient(ellipse 80% 70% at 0% 50%, rgba(91,157,255,0.06), transparent 55%),
+        var(--bg-soft);
+    }
+    .auth-card {
+      width: 100%; max-width: 420px;
+      background: linear-gradient(165deg, rgba(255,255,255,0.045) 0%, rgba(255,255,255,0.02) 100%);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-lg); padding: 36px 32px;
+      box-shadow: var(--shadow-pop), 0 0 0 1px rgba(255,255,255,0.03) inset;
+      backdrop-filter: blur(20px);
+      position: relative; overflow: hidden;
+      animation: fadeSlideUp 0.72s var(--ease) 0.08s both;
+    }
+    .auth-card::before {
+      content: ''; position: absolute; top: 0; left: 24px; right: 24px; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(91,157,255,0.6), rgba(192,132,252,0.5), transparent);
+    }
+    .auth-card::after {
+      content: ''; position: absolute; top: -80px; right: -80px; width: 200px; height: 200px;
+      border-radius: 50%; background: radial-gradient(circle, rgba(91,157,255,0.08), transparent 70%);
+      pointer-events: none;
+    }
+
+    .auth-tabs {
+      display: flex; gap: 4px;
+      background: rgba(0,0,0,0.25); border: 1px solid var(--border);
+      border-radius: 100px; padding: 4px; margin-bottom: 28px;
+      position: relative;
+    }
+    .auth-tab {
+      flex: 1; text-align: center; padding: 10px 0; border-radius: 100px;
+      font-size: 13.5px; font-weight: 600; color: var(--text-secondary);
+      text-decoration: none; transition: color 0.25s var(--ease), background 0.25s var(--ease);
+      position: relative; z-index: 1;
+    }
+    .auth-tab.active {
+      background: var(--grad-brand); color: #06101f;
+      box-shadow: 0 4px 16px rgba(91,157,255,0.3);
+      animation: tabPop 0.35s var(--ease);
+    }
+    .auth-tab:not(.active):hover { color: var(--text-primary); }
+
+    .auth-card h2 {
+      font-family: var(--font-display); font-size: 24px; font-weight: 700;
+      margin-bottom: 6px; letter-spacing: -0.3px; position: relative; z-index: 1;
+    }
+    .auth-sub { color: var(--text-secondary); font-size: 13.5px; margin-bottom: 26px; position: relative; z-index: 1; }
+
+    .flash-msg {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--danger-dim); border: 1px solid rgba(251,93,107,0.3); color: var(--danger);
+      font-size: 13px; font-weight: 500; padding: 12px 16px; border-radius: var(--radius-sm);
+      margin-bottom: 20px; position: relative; z-index: 1;
+      animation: shakeIn 0.5s var(--ease);
+    }
+    .flash-msg svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+    /* Role segmented selector */
+    .role-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .role-option { position: relative; display: block; cursor: pointer; }
+    .role-option input { position: absolute; opacity: 0; width: 0; height: 0; }
+    .role-card {
+      display: flex; flex-direction: column; gap: 6px;
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      background: var(--surface); padding: 14px 16px;
+      transition: transform 0.2s var(--ease), border-color 0.2s, background 0.2s, box-shadow 0.25s;
+    }
+    .role-card svg { width: 18px; height: 18px; color: var(--text-tertiary); transition: color 0.2s, transform 0.2s var(--ease); }
+    .role-card span { font-size: 13.5px; font-weight: 600; }
+    .role-card small { font-size: 10.5px; color: var(--text-tertiary); line-height: 1.4; }
+    .role-option:hover .role-card {
+      border-color: var(--border-strong);
+      transform: translateY(-1px);
+    }
+    .role-option input:checked + .role-card {
+      border-color: var(--accent); background: var(--accent-soft);
+      box-shadow: 0 0 0 3px var(--accent-soft), 0 6px 20px rgba(91,157,255,0.12);
+      animation: tabPop 0.3s var(--ease);
+    }
+    .role-option input:checked + .role-card svg { color: var(--accent); transform: scale(1.08); }
+    .role-option input:checked + .role-card span { color: var(--accent); }
+
+    .auth-card form { position: relative; z-index: 1; }
+    .auth-card .field label { letter-spacing: 0.2px; }
+
+    /* Premium dark inputs — override global + autofill */
+    .auth-card .input-wrap input,
+    .auth-card .input-wrap select {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+    .auth-card .input-wrap input:hover,
+    .auth-card .input-wrap select:hover {
+      border-color: rgba(91,157,255,0.35);
+      background: rgba(255,255,255,0.055);
+    }
+    .auth-card .input-wrap input:-webkit-autofill,
+    .auth-card .input-wrap input:-webkit-autofill:hover,
+    .auth-card .input-wrap input:-webkit-autofill:focus {
+      -webkit-box-shadow: 0 0 0 1000px #0e121c inset !important;
+      -webkit-text-fill-color: var(--text-primary) !important;
+      caret-color: var(--text-primary);
+      transition: background-color 9999s ease-out;
+    }
+
+    .btn-block {
+      width: 100%; justify-content: center; padding: 14px 22px; font-size: 14px;
+      margin-top: 10px; letter-spacing: 0.2px;
+      transition: transform 0.18s var(--ease), box-shadow 0.25s var(--ease), filter 0.2s var(--ease);
+    }
+    .btn-primary.btn-block:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 32px rgba(91,157,255,0.38), 0 0 20px rgba(91,157,255,0.15);
+      filter: brightness(1.08);
+    }
+    .btn-primary.btn-block:active {
+      transform: translateY(0);
+      box-shadow: 0 6px 18px rgba(91,157,255,0.25);
+      filter: brightness(1);
+      transition-duration: 0.08s;
+    }
+
+    .input-wrap input, .input-wrap select {
+      transition: transform 0.18s var(--ease), border-color 0.22s, background 0.22s, box-shadow 0.22s;
+    }
+    .input-wrap input:focus, .input-wrap select:focus {
+      transform: translateY(-2px);
+      box-shadow: 0 0 0 4px var(--accent-soft), 0 6px 20px rgba(91,157,255,0.1);
+    }
+    .input-wrap:focus-within svg { color: var(--accent); transition: color 0.2s var(--ease); }
+
+    .auth-switch { text-align: center; margin-top: 22px; font-size: 13px; color: var(--text-secondary); position: relative; z-index: 1; }
+    .auth-switch a {
+      color: var(--accent); font-weight: 600; text-decoration: none;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      -webkit-background-clip: text; background-clip: text;
+      transition: opacity 0.2s;
+    }
+    .auth-switch a:hover { opacity: 0.85; text-decoration: underline; }
+
+    /* ── MOTION / ENTRANCE ANIMATIONS ─────────────────────────── */
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(22px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    @keyframes tabPop {
+      0%   { transform: scale(0.94); }
+      60%  { transform: scale(1.03); }
+      100% { transform: scale(1); }
+    }
+    @keyframes shakeIn {
+      0%   { opacity: 0; transform: translateX(-6px); }
+      40%  { transform: translateX(4px); }
+      70%  { transform: translateX(-2px); }
+      100% { opacity: 1; transform: translateX(0); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .auth-card, .brand-mark, .visual-center .eyebrow, .visual-center h1,
+      .visual-center > p, .scan-emblem, .wave-monitor, .metric-chips,
+      .float-card, .flash-msg, .auth-tab.active, .role-option input:checked + .role-card { animation: none; }
+      .btn-primary.btn-block, .input-wrap input, .input-wrap select, .role-card { transition: none; }
+    }
+
+    @media (max-width: 980px) {
+      .auth-shell { grid-template-columns: 1fr; }
+      .auth-visual {
+        min-height: 380px; padding: 36px 28px;
+        border-bottom: 1px solid var(--border);
+      }
+      .auth-visual::after { display: none; }
+      .visual-center h1 { font-size: 30px; }
+      .metric-chips { display: none; }
+      .auth-form-side { justify-content: center; padding: 36px 24px; }
+      .auth-card { max-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-ambient"></div>
+
+  <div class="auth-shell">
+    <!-- ══════════ LEFT: VISUAL / BRAND PANEL ══════════ -->
+    <aside class="auth-visual">
+      <div class="visual-blob blob-1"></div>
+      <div class="visual-blob blob-2"></div>
+
+      <div class="brand-mark">
+        <div class="brand-icon-lg">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+          </svg>
+        </div>
+        <span>BOBOK</span>
+      </div>
+
+      <div class="visual-center">
+        <div class="eyebrow">Bergabung Bersama Tim</div>
+        <h1>Mulai Pantau<br/>Kondisi <span class="grad-text">Kelelahanmu</span></h1>
+        <p>Buat akun untuk mengakses dashboard monitoring real-time, riwayat kejadian kelelahan, dan laporan analitik personal yang otomatis tercatat setiap sesi kerja.</p>
+
+        <div class="scan-emblem">
+          <div class="scan-ring"></div>
+          <div class="scan-ring ring2"></div>
+          <div class="scan-core">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="wave-monitor">
+          <span class="wave-label">// Live EAR Signal</span>
+          <span class="wave-status">LIVE</span>
+          <div class="wave-track-wrap">
+            <svg viewBox="0 0 300 80" preserveAspectRatio="none">
+              <path d="M0,42 H40 L48,14 L56,42 L64,42 H190 L198,16 L206,42 L214,42 H300" fill="none" stroke="url(#waveGrad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <defs>
+                <linearGradient id="waveGrad" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0" stop-color="#5b9dff"/>
+                  <stop offset="0.5" stop-color="#8b7bf7"/>
+                  <stop offset="1" stop-color="#38d9c9"/>
+                </linearGradient>
+              </defs>
+            </svg>
+            <svg viewBox="0 0 300 80" preserveAspectRatio="none">
+              <path d="M0,42 H40 L48,14 L56,42 L64,42 H190 L198,16 L206,42 L214,42 H300" fill="none" stroke="url(#waveGrad2)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <defs>
+                <linearGradient id="waveGrad2" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0" stop-color="#5b9dff"/>
+                  <stop offset="0.5" stop-color="#8b7bf7"/>
+                  <stop offset="1" stop-color="#38d9c9"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+        </div>
+
+        <div class="metric-chips">
+          <span class="metric-chip"><strong>256-bit</strong> Enkripsi</span>
+          <span class="metric-chip"><strong>2 Role</strong> Pekerja &amp; Admin</span>
+          <span class="metric-chip"><strong>Free</strong> Setup</span>
+        </div>
+      </div>
+
+      <div class="floating-cards">
+        <div class="float-card fc1">
+          <div class="fc-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <div>Data Terenkripsi<span class="fc-sub">Privasi terjaga</span></div>
+        </div>
+        <div class="float-card fc2">
+          <div class="fc-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </div>
+          <div>Setup &lt; 1 Menit<span class="fc-sub">Langsung pantau</span></div>
+        </div>
+        <div class="float-card fc3">
+          <div class="fc-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div>Multi-Role Access<span class="fc-sub">Pekerja &amp; Admin</span></div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ══════════ RIGHT: AUTH FORM ══════════ -->
+    <main class="auth-form-side">
+      <div class="auth-card">
+        <div class="auth-tabs">
+          <a href="{{ url_for('login') }}" class="auth-tab">Masuk</a>
+          <a href="{{ url_for('register') }}" class="auth-tab active">Daftar</a>
+        </div>
+
+        <h2>Buat Akun Baru</h2>
+        <p class="auth-sub">Lengkapi data berikut untuk mendaftar ke sistem BOBOK.</p>
+
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            {% for msg in messages %}
+              <div class="flash-msg">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                {{ msg }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form method="POST">
+          <div class="field">
+            <label>Nama Lengkap</label>
+            <div class="input-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <input type="text" name="nama" placeholder="Masukkan nama lengkap" required autocomplete="off"/>
+            </div>
+          </div>
+          <div class="field">
+            <label>Username</label>
+            <div class="input-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <input type="text" name="username" placeholder="Buat username" required autocomplete="off"/>
+            </div>
+          </div>
+          <div class="field">
+            <label>Password</label>
+            <div class="input-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <input type="password" name="password" id="passwordInput" placeholder="Buat password" required/>
+              <button type="button" class="toggle-pass" onclick="togglePassword()" aria-label="Tampilkan password">
+                <svg id="eyeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Pilihan role admin telah dihapus, pengguna otomatis mendaftar sebagai pekerja -->
+
+          <button type="submit" class="btn btn-primary btn-block">Buat Akun</button>
+        </form>
+
+        <p class="auth-switch">Sudah punya akun? <a href="{{ url_for('login') }}">Masuk di sini</a></p>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function togglePassword() {
+      const input = document.getElementById('passwordInput');
+      const icon  = document.getElementById('eyeIcon');
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+      } else {
+        input.type = 'password';
+        icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+      }
+    }
+  </script>
+</body>
+</html>

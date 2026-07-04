@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Analytics — BOBOK</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    body { overflow-y: auto; padding-top: var(--header-h); }
+  </style>
+</head>
+<body class="hud-body">
+
+  <!-- HEADER -->
+  <header class="hud-header">
+    <div class="logo-block">
+      <div class="logo-icon-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <ellipse cx="12" cy="12" rx="10" ry="6"/>
+          <circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/>
+          <circle cx="12" cy="12" r="5" stroke-dasharray="3 2"/>
+        </svg>
+      </div>
+      <div>
+        <div class="logo-title">BOBOK</div>
+        <div class="logo-sub">Admin Dashboard</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="nav-links">
+        <a href="{{ url_for('admin_live') }}" class="nav-btn">Live Monitor</a>
+        <a href="{{ url_for('admin_analytics') }}" class="nav-btn" style="color:#fff;background:rgba(255,255,255,0.12);border-color:rgba(255,255,255,0.25)">Analytics</a>
+        <a href="{{ url_for('logout') }}" class="nav-btn">Keluar</a>
+      </div>
+    </div>
+  </header>
+
+  <div class="page-wrapper">
+
+    <div class="page-header">
+      <div>
+        <div class="page-title">Analytics — Semua Pekerja</div>
+        <div class="page-sub">Histori kejadian kantuk &amp; microsleep seluruh pekerja</div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-row">
+      <label>Filter Pekerja</label>
+      <select id="filterPekerja" onchange="loadData()">
+        <option value="">Semua Pekerja</option>
+      </select>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="stats-row">
+      <div class="stat-box">
+        <div class="stat-box-accent" style="background: var(--danger);"></div>
+        <div class="stat-box-label">Microsleep</div>
+        <div class="stat-box-val danger-text" id="totalMicro">—</div>
+        <div class="stat-box-sub">Total kejadian microsleep</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-box-accent" style="background: var(--warn);"></div>
+        <div class="stat-box-label">Menguap / Lelah</div>
+        <div class="stat-box-val warn-text" id="totalMenguap">—</div>
+        <div class="stat-box-sub">Total deteksi kelelahan</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-box-accent" style="background: var(--safe);"></div>
+        <div class="stat-box-label">Hari Aktif</div>
+        <div class="stat-box-val safe-text" id="totalHari">—</div>
+        <div class="stat-box-sub">Hari dengan data rekaman</div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="data-table-wrap">
+      <div style="padding: 14px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px;">
+        <span style="font-size:13px; font-weight:600; color:var(--text-primary);">Log Kejadian</span>
+        <span id="eventCount" style="font-size:11px; color:var(--text-tertiary); padding: 2px 8px; background:var(--neutral-bg); border-radius:12px;"></span>
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Nama Pekerja</th>
+            <th>Waktu</th>
+            <th>Tanggal</th>
+            <th>Jenis Kejadian</th>
+          </tr>
+        </thead>
+        <tbody id="eventTable">
+          <tr><td colspan="4" style="text-align:center; padding:40px; color:var(--text-tertiary); font-size:13px;">Memuat data...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <script>
+    async function loadPekerja() {
+      const res  = await fetch('/api/pekerja_list');
+      const data = await res.json();
+      const sel  = document.getElementById('filterPekerja');
+      data.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = p.nama;
+        sel.appendChild(opt);
+      });
+    }
+
+    async function loadData() {
+      const uid   = document.getElementById('filterPekerja').value;
+      const url   = '/api/analytics' + (uid ? `?user_id=${uid}` : '');
+      const res   = await fetch(url);
+      const data  = await res.json();
+      const tbody = document.getElementById('eventTable');
+      const countEl = document.getElementById('eventCount');
+
+      if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:40px;color:var(--text-tertiary);font-size:13px;">Belum ada data tercatat.</td></tr>';
+        document.getElementById('totalMicro').textContent   = '0';
+        document.getElementById('totalMenguap').textContent = '0';
+        document.getElementById('totalHari').textContent    = '0';
+        countEl.textContent = '0 kejadian';
+        return;
+      }
+
+      let micro = 0, menguap = 0, hari = new Set();
+      tbody.innerHTML = '';
+
+      data.forEach(e => {
+        const dt  = new Date(e.timestamp);
+        const tgl = dt.toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric' });
+        const jam = dt.toLocaleTimeString('id-ID', { hour12: false });
+        hari.add(dt.toDateString());
+        const isMicro = e.jenis === 'microsleep';
+        if (isMicro) micro++; else menguap++;
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td style="font-weight:500">${e.nama}</td>
+          <td style="font-family:var(--font-mono);font-size:12px">${jam}</td>
+          <td style="color:var(--text-secondary)">${tgl}</td>
+          <td><span class="badge ${isMicro ? 'badge-danger' : 'badge-warn'}">
+            ${isMicro ? 'Microsleep' : 'Menguap / Lelah'}
+          </span></td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById('totalMicro').textContent   = micro;
+      document.getElementById('totalMenguap').textContent = menguap;
+      document.getElementById('totalHari').textContent    = hari.size;
+      countEl.textContent = `${data.length} kejadian`;
+    }
+
+    loadPekerja().then(() => loadData());
+  </script>
+</body>
+</html>
