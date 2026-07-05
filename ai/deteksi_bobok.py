@@ -432,6 +432,7 @@ def start_detection():
     warna_status     = WARNA[0]
     microsleep_counter = 0
     lelah_counter = 0
+    menguap_counter = 0
     lelah_logged = False
     microsleep_logged = False
     microsleep_event_count = 0       # total event microsleep dalam sesi
@@ -507,10 +508,20 @@ def start_detection():
                 lelah_counter += 1
             else:
                 lelah_counter = 0
+                
+            # Menguap counter (Mouth Aspect Ratio >= 0.4)
+            if mar_val is not None and mar_val >= 0.4:
+                menguap_counter += 1
+            else:
+                menguap_counter = 0
+                
+            is_fatigued = (lelah_counter >= 360) or (menguap_counter >= 60)
+            
+            if not is_fatigued:
                 lelah_logged = False
 
             # Masukkan ke antrean logging tepat SATU KALI per siklus
-            if lelah_counter >= 360 and not lelah_logged:
+            if is_fatigued and not lelah_logged:
                 with state_lock:
                     shared_state['pending_events'].append('menguap_lelah')
                 lelah_logged = True
@@ -520,14 +531,14 @@ def start_detection():
                     shared_state['pending_events'].append('microsleep')
                 microsleep_logged = True
 
-            # Alarm terpicu jika microsleep >= 720 ATAU lelah >= 360
-            trigger_alarm = (microsleep_counter >= 720) or (lelah_counter >= 360)
+            # Alarm terpicu
+            trigger_alarm = (microsleep_counter >= 720) or is_fatigued
 
             if microsleep_counter >= 720:
                 status = 'BAHAYA: MICROSLEEP!'
                 warna_status = (0, 0, 255)
-            elif lelah_counter >= 360:
-                if pred == 2:
+            elif is_fatigued:
+                if menguap_counter >= 60 or pred == 2:
                     status = 'PERINGATAN: MENGUAP / LELAH BERAT'
                 else:
                     status = 'PERINGATAN: MATA MULAI LELAH / SAYU'
