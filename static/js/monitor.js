@@ -246,10 +246,10 @@ function updateHUD(data) {
   if (ear !== null) {
     const earPct = Math.min((ear / 0.5) * 100, 100);
     earFill.style.width = earPct + '%';
-    earFill.style.background = ear < 0.22 ? 'var(--danger)' : ear < 0.26 ? 'var(--warn)' : 'linear-gradient(90deg, var(--safe), var(--accent))';
+    earFill.style.background = ear >= 0.5 ? 'var(--danger)' : ear >= 0.25 ? 'var(--warn)' : 'linear-gradient(90deg, var(--safe), var(--accent))';
     earVal.textContent = ear.toFixed(3);
-    setMetricStatus(earStatus, ear < 0.22 ? 'KRITIS' : ear < 0.26 ? 'SAYU' : 'NORMAL',
-                               ear < 0.22 ? 'st-danger' : ear < 0.26 ? 'st-warn' : 'st-safe');
+    setMetricStatus(earStatus, ear >= 0.5 ? 'KRITIS' : ear >= 0.25 ? 'SAYU' : 'NORMAL',
+                               ear >= 0.5 ? 'st-danger' : ear >= 0.25 ? 'st-warn' : 'st-safe');
   }
 
   // ── MAR ─────────────────────────────────────────────────────
