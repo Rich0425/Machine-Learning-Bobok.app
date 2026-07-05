@@ -222,7 +222,7 @@ function updateHUD(data) {
     setStatus('safe');
     ringLabel.textContent = 'FOKUS';
     alertCode.textContent = 'SYS.NORMAL';
-    alertMsg.textContent  = 'Pengemudi dalam kondisi waspada penuh.';
+    alertMsg.textContent  = 'Pekerja dalam kondisi waspada penuh.';
     setRingProgress(85);
 
     if (lastLogStatus !== 'safe') {

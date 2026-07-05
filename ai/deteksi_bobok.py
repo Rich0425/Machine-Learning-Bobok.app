@@ -395,6 +395,7 @@ shared_state = {
     'mar_mean': None,
     'frame': None,
     'running': False,
+    'pending_events': []
 }
 
 def start_detection():
@@ -430,6 +431,9 @@ def start_detection():
     label_pred       = 0
     warna_status     = WARNA[0]
     microsleep_counter = 0
+    lelah_counter = 0
+    lelah_logged = False
+    microsleep_logged = False
     microsleep_event_count = 0       # total event microsleep dalam sesi
     prev_microsleep_active = False   # apakah frame sebelumnya sedang microsleep
     MICROSLEEP_EVENT_THRESHOLD = 10  # alarm baru bunyi setelah 10 event
@@ -491,23 +495,46 @@ def start_detection():
             label_pred = pred
             warna_status = WARNA[pred]
 
-            # Microsleep counter (menghitung frame saat mata tertutup beruntun)
+            # Microsleep counter (mata tertutup beruntun)
             if ear_val is not None and ear_val >= MICROSLEEP_THRESH:
                 microsleep_counter += 1
             else:
                 microsleep_counter = 0
+                microsleep_logged = False
+                
+            # Lelah counter (prediksi 1 atau 2 beruntun)
+            if pred in [1, 2]:
+                lelah_counter += 1
+            else:
+                lelah_counter = 0
+                lelah_logged = False
 
-            # Alarm terpicu jika mata tertutup terus-menerus selama 720 frame (24 detik)
-            trigger_alarm = (microsleep_counter >= 720)
+            # Masukkan ke antrean logging tepat SATU KALI per siklus
+            if lelah_counter >= 360 and not lelah_logged:
+                with state_lock:
+                    shared_state['pending_events'].append('menguap_lelah')
+                lelah_logged = True
+            
+            if microsleep_counter >= 720 and not microsleep_logged:
+                with state_lock:
+                    shared_state['pending_events'].append('microsleep')
+                microsleep_logged = True
+
+            # Alarm terpicu jika microsleep >= 720 ATAU lelah >= 360
+            trigger_alarm = (microsleep_counter >= 720) or (lelah_counter >= 360)
 
             if microsleep_counter >= 720:
-                status = 'BAHAYA: TERTIDUR PULAS!'
-            elif pred == 2:
-                status = 'PERINGATAN: MENGUAP / LELAH BERAT'
-            elif pred == 1:
-                status = 'PERINGATAN: MATA MULAI LELAH / SAYU'
+                status = 'BAHAYA: MICROSLEEP!'
+                warna_status = (0, 0, 255)
+            elif lelah_counter >= 360:
+                if pred == 2:
+                    status = 'PERINGATAN: MENGUAP / LELAH BERAT'
+                else:
+                    status = 'PERINGATAN: MATA MULAI LELAH / SAYU'
+                warna_status = (0, 165, 255)
             else:
                 status = 'SADAR (FOKUS)'
+                warna_status = (50, 205, 50)
 
         # Render overlay di frame
         frame = gambar_ui(

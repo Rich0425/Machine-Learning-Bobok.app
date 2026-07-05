@@ -223,20 +223,18 @@ def status():
         live.last_update = datetime.utcnow()
         db.session.commit()
 
-    # Catat event BAHAYA (hindari duplikat berturut-turut < 5 detik)
-    if 'BAHAYA' in status_str:
-        last_event = EventKantuk.query.filter_by(
-            user_id=current_user.id
-        ).order_by(EventKantuk.timestamp.desc()).first()
+    # Tarik data dari antrean pending_events dan catat
+    pending = []
+    with state_lock:
+        if 'pending_events' in shared_state and shared_state['pending_events']:
+            pending = list(shared_state['pending_events'])
+            shared_state['pending_events'].clear()
 
-        now = datetime.now(timezone.utc)
-        last_ts = last_event.timestamp.replace(tzinfo=timezone.utc) if last_event else None
-
-        if not last_event or (now - last_ts).total_seconds() > 5:
-            jenis = 'microsleep' if 'MICROSLEEP' in status_str else 'menguap_lelah'
-            ev = EventKantuk(user_id=current_user.id, jenis=jenis)
+    if pending:
+        for ev_type in pending:
+            ev = EventKantuk(user_id=current_user.id, jenis=ev_type)
             db.session.add(ev)
-            db.session.commit()
+        db.session.commit()
 
     return jsonify(data)
 
